@@ -7,7 +7,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Data.SQLite;
 using System.Data.SqlClient;
 using System.Configuration;
 
@@ -15,31 +14,27 @@ namespace Santier1
 {
     public partial class AngajatiControl : UserControl
     {
-        private SQLiteConnection sqlConn;
-        private SQLiteDataAdapter dbDataAdapter;
+        private SqlConnection connection;
+        private SqlDataAdapter dbDataAdapter;
         private DataTable dtAngajat;
-        
+        private DataSet dsAngajat;
 
         public AngajatiControl()
-        {
-            //sqlConn = new SQLiteConnection(Properties.Settings.Default.Database);
-            //dbDataAdapter = new SQLiteDataAdapter(
-            //    "SELECT EmployeeId, FirstName, LastName, Title, HireDate, Address, City FROM employees", sqlConn);
-            //dtAngajat = new DataTable();
+        {          
+            string connectionString = ConfigurationManager.ConnectionStrings["SQLEXPRESSConnection"].ConnectionString;
+            connection = new SqlConnection(connectionString);
 
-            dtAngajat = new DataTable();
-            string connectionString = ConfigurationManager.ConnectionStrings["SQLEXPRESSConnection"].ToString();
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            string sql = String.Empty;
+            // write the sql statement to execute
+            if (!String.IsNullOrWhiteSpace(connection.ToString()))
             {
-                string sql = String.Empty;
-                // write the sql statement to execute
-                if (!String.IsNullOrWhiteSpace(conn.ToString()))
-                {
-                    sql = "SELECT EmployeeId, FirstName, LastName, Title, HireDate, Address, City FROM employees";
-                }
+                sql = "SELECT EmployeeId, FirstName, LastName, Title, HireDate, Address, City FROM employees";
+                dbDataAdapter = new SqlDataAdapter();
+                dsAngajat = new DataSet();
+                dtAngajat = new DataTable();
+                dbDataAdapter.SelectCommand = new SqlCommand(sql, connection);
+            
             }
-
             InitializeComponent();
         }
 
@@ -60,26 +55,29 @@ namespace Santier1
             dbDataAdapter.UpdateCommand = GetUpdateCommand();
             dbDataAdapter.DeleteCommand = GetDeleteCommand();
 
+            connection.Open();
             //Get all the fruit data from the database and bind it to the grid
-            dbDataAdapter.Fill(dtAngajat);
-            gridAngajati.DataSource = dtAngajat;
+            dbDataAdapter.Fill(dsAngajat);
+            gridAngajati.DataSource = dsAngajat.Tables[0];
+            //dbDataAdapter.Dispose();
+            connection.Close();
         }
-        private SQLiteCommand GetInsertCommand()
+        private SqlCommand GetInsertCommand()
         {
             string qry = @"INSERT INTO employees
                 (FirstName, LastName, Title, HireDate, Address, City)
                 VALUES(@FirstName, @LastName, @Title, @HireDate, @Address, @City)";
 
-            SQLiteCommand insertCmd = new SQLiteCommand(qry, sqlConn);
+            SqlCommand insertCmd = new SqlCommand(qry, connection);
 
-            var parNumeAngajat = new SQLiteParameter("@FirstName", DbType.String, "FirstName");
-            var parPrenumeAngajat = new SQLiteParameter("@LastName", DbType.String, "LastName");
-            var parFunctieAngajat = new SQLiteParameter("@Title", DbType.String, "Title");
-            var parDataAngajariiAngajat = new SQLiteParameter("@HireDate", DbType.String, "HireDate");
-            var parAdresaAngajat = new SQLiteParameter("@Address", DbType.String, "Address");
-            var parOrasAngajat = new SQLiteParameter("@City", DbType.String, "City");
+            var parNumeAngajat = new SqlParameter("@FirstName", "FirstName");
+            var parPrenumeAngajat = new SqlParameter("@LastName", "LastName");
+            var parFunctieAngajat = new SqlParameter("@Title", "Title");
+            var parDataAngajariiAngajat = new SqlParameter("@HireDate", "HireDate");
+            var parAdresaAngajat = new SqlParameter("@Address", "Address");
+            var parOrasAngajat = new SqlParameter("@City", "City");
 
-            insertCmd.Parameters.AddRange(new SQLiteParameter[]
+            insertCmd.Parameters.AddRange(new SqlParameter[]
             {
                 parNumeAngajat, parPrenumeAngajat, parFunctieAngajat, parDataAngajariiAngajat, parAdresaAngajat, parOrasAngajat
             });
@@ -87,7 +85,7 @@ namespace Santier1
             return insertCmd;
         }
 
-        private SQLiteCommand GetUpdateCommand()
+        private SqlCommand GetUpdateCommand()
         {
             string qry = @"UPDATE employees
                 SET FirstName = @FirstName,
@@ -98,17 +96,17 @@ namespace Santier1
                     City = @City
                 WHERE EmployeeId = @EmployeeId";
 
-            SQLiteCommand updateCmd = new SQLiteCommand(qry, sqlConn);
+            SqlCommand updateCmd = new SqlCommand(qry, connection);
 
-            var parIdAngajat = new SQLiteParameter("@EmployeeId", DbType.Int32, "EmployeeId");
-            var parNumeAngajat = new SQLiteParameter("@FirstName", DbType.String, "FirstName");
-            var parPrenumeAngajat = new SQLiteParameter("@LastName", DbType.String, "LastName");
-            var parFunctieAngajat = new SQLiteParameter("@Title", DbType.String, "Title");
-            var parDataAngajariiAngajat = new SQLiteParameter("@HireDate", DbType.String, "HireDate");
-            var parAdresaAngajat = new SQLiteParameter("@Address", DbType.String, "Address");
-            var parOrasAngajat = new SQLiteParameter("@City", DbType.String, "City");
+            var parIdAngajat = new SqlParameter("@EmployeeId", "EmployeeId");
+            var parNumeAngajat = new SqlParameter("@FirstName", "FirstName");
+            var parPrenumeAngajat = new SqlParameter("@LastName", "LastName");
+            var parFunctieAngajat = new SqlParameter("@Title", "Title");
+            var parDataAngajariiAngajat = new SqlParameter("@HireDate", "HireDate");
+            var parAdresaAngajat = new SqlParameter("@Address", "Address");
+            var parOrasAngajat = new SqlParameter("@City", "City");
 
-            updateCmd.Parameters.AddRange(new SQLiteParameter[]
+            updateCmd.Parameters.AddRange(new SqlParameter[]
             {
                 parIdAngajat, parNumeAngajat, parPrenumeAngajat, parFunctieAngajat, parDataAngajariiAngajat, parAdresaAngajat, parOrasAngajat
             });
@@ -116,13 +114,13 @@ namespace Santier1
             return updateCmd;
         }
 
-        private SQLiteCommand GetDeleteCommand()
+        private SqlCommand GetDeleteCommand()
         {
             string qry = @"DELETE FROM employees WHERE EmployeeId = @EmployeeId";
 
-            SQLiteCommand deleteCmd = new SQLiteCommand(qry, sqlConn);
+            SqlCommand deleteCmd = new SqlCommand(qry, connection);
 
-            var parIdAngajat = new SQLiteParameter("@EmployeeId", DbType.Int32, "EmployeeId");
+            var parIdAngajat = new SqlParameter("@EmployeeId", "EmployeeId");
 
             deleteCmd.Parameters.Add(parIdAngajat);
 
@@ -139,7 +137,7 @@ namespace Santier1
             }
             catch (SqlException ex)
             {
-                
+                MessageBox.Show(ex.Message);
             }
         }
     }
