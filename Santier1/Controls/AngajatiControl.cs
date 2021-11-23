@@ -64,6 +64,9 @@ namespace Santier1
         }
         private SqlCommand GetInsertCommand()
         {
+
+
+
             string qry = @"INSERT INTO employees
                 (FirstName, LastName, Title, HireDate, Address, City)
                 VALUES(@FirstName, @LastName, @Title, @HireDate, @Address, @City)";
@@ -77,11 +80,19 @@ namespace Santier1
             var parAdresaAngajat = new SqlParameter("@Address", "Address");
             var parOrasAngajat = new SqlParameter("@City", "City");
 
+
+
             insertCmd.Parameters.AddRange(new SqlParameter[]
             {
                 parNumeAngajat, parPrenumeAngajat, parFunctieAngajat, parDataAngajariiAngajat, parAdresaAngajat, parOrasAngajat
             });
 
+            //connection.Open();
+            //dbDataAdapter.InsertCommand = new SqlCommand(qry, connection);
+            //dbDataAdapter.InsertCommand.ExecuteNonQuery();
+
+            //MessageBox.Show("Insert!");
+            //connection.Close();
             return insertCmd;
         }
 
@@ -139,6 +150,11 @@ namespace Santier1
             {
                 MessageBox.Show(ex.Message);
             }
+        }
+
+        private void gridAngajati_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
